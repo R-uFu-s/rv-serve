@@ -19,7 +19,6 @@ const SVG = {
 function helpers(classname) {
     // create tooltip element before #page-wrapper
     let page = document.querySelector('#page-wrapper');
-    console.log(page);
     let tooltip = document.getElementById('svg_tooltip');
     if (!tooltip) {
         tooltip = document.createElement('p');
@@ -124,6 +123,9 @@ function displayTooltip(tooltip, classname) {
         if (!time_start) time_start = Date.now();
 
         let mouse = mousePos2(e, tl_obj);
+        // console.log("mouse ev: ", e);
+        // console.log("mouse pos: ", mouse);
+        
 
         tooltip.style.transform = "translate(" + mouse.x + "px, " + mouse.y + "px)";
         tooltip.style.display = "block";
@@ -217,8 +219,12 @@ function displayTooltip(tooltip, classname) {
 }
 
 function mousePos2(evt, obj) {
-    let x_pos = evt.clientX + obj.getBoundingClientRect().x + 15; // offset from svg start + svg offset
-    let y_pos = evt.clientY + 5; // baseline hanging
+    let x_pos = evt.clientX + obj.getBoundingClientRect().x - 40; // offset from svg start + svg offset
+    let y_pos = evt.clientY + 115; // i give up
+    // console.log("bounding y ", obj.getBoundingClientRect().y);
+    // console.log("client y ", evt.clientY);
+    // console.log("obj ", obj);
+    // console.log("bounding rect ", obj.getBoundingClientRect());
 
     return {
         //object

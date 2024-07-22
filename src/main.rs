@@ -28,7 +28,7 @@ async fn submit_code(payload: web::Json<SubmitCodePayload>) -> HttpResponse {
     //Write the received code to ./test-crate/lib.rs
     match fs::write("./test-crate/src/lib.rs", code) {
         Ok(_) => (),
-        Err(E) => {return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(E));}
+        Err(e) => {return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(e));}
     }
 
     // Run the `cargo rv-plugin` command inside the `test-crate` directory
@@ -39,8 +39,9 @@ async fn submit_code(payload: web::Json<SubmitCodePayload>) -> HttpResponse {
     match output {
         Ok(res) => {
             if !res.status.success() {
-                println!("OUTPUT {:#?}", res);
-                return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).into();
+              // Capture stderr and return it in the error response
+              let stderr = String::from_utf8_lossy(&res.stderr);
+              return HttpResponse::BadRequest().body(format!("Error: {}", stderr));
             }
         }
         Err(E) => {

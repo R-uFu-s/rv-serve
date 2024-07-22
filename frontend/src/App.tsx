@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import reportWebVitals from './reportWebVitals';
 import { basicSetup, extensions } from './setup';
 import { Extension, EditorState } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import axios from 'axios';
+import ErrorCard from './ErrorCard';
 
 declare function helpers(param: string): void;
 
 const defaultExample: string = `
-fn main() {
-    let x = 7;
-    let y = x;
+fn main () {
+    let mut x = 7;
+    let mut z = 6;
+    let mut a = & mut x;
+    let mut c = & mut z;
+    let mut b = & mut a;
+    b = & mut c;
+    println!("x {}", *a);
+    println!("z {}", **b);
 }
 `.trim();
 
@@ -41,6 +47,8 @@ class Editor {
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isErr, setErr] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
 
   useEffect(() => {
@@ -62,11 +70,20 @@ const App = () => {
 
       if (response.status === 200) {
         await reloadSvgs();
+        setErr(false);
       } else {
         console.error('Error:', response.statusText);
+        setError(response.data);
+        setErr(true);
       }
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        setError(error.response.data); // Extract and set error message
+      } else {
+        setError('An unexpected error occurred');
+      }
       console.error('An error occurred:', error);
+      setErr(true);
     } finally {
       setIsLoading(false);
     }
@@ -86,33 +103,40 @@ const App = () => {
     }
   };
 
+  useEffect(() => {
+    handleClick(); // Call handleClick when the component mounts
+  }, [editor]);
+
+
   return (
     <div id="page-wrapper" className="page-wrapper">
-      <button className="cm-button" id="gen-button" onClick={handleClick} disabled={isLoading}>
+      <button className="cm-button large-button" id="gen-button" onClick={handleClick} disabled={isLoading}>
         {isLoading ? <span className="loader"></span> : 'Generate Visualization'}
       </button>
-      <div className="page">
-        <div id="menu-bar" className="menu-bar sticky">
-          <div id="content" className="content">
-            <main>
-              <div className="flex-container vis_block" style={{ position: 'relative', marginLeft: '75px', marginRight: '75px', display: 'flex' }}>
-                <object 
-                  type="image/svg+xml" 
-                  className="ex2 code_panel" 
-                  data="ex-assets/vis_code.svg">
-                </object>
-                <object 
-                  type="image/svg+xml" 
-                  className="ex2 tl_panel"
-                  style={{width: 'auto'}}
-                  data="ex-assets/vis_timeline.svg" 
-                  onMouseEnter={() => helpers('ex2')}>
-                </object>
-              </div>
-            </main>
+      {isErr && error ? <ErrorCard err_string={error}></ErrorCard> : 
+        <div className="page">
+          <div id="menu-bar" className="menu-bar sticky">
+            <div id="content" className="content">
+              <main>
+                <div className="flex-container vis_block" style={{ position: 'relative', marginLeft: '50px', marginRight: '50px', display: 'flex' }}>
+                  <object 
+                    type="image/svg+xml" 
+                    className="ex2 code_panel" 
+                    data="ex-assets/vis_code.svg">
+                  </object>
+                  <object 
+                    type="image/svg+xml" 
+                    className="ex2 tl_panel"
+                    style={{width: 'auto'}}
+                    data="ex-assets/vis_timeline.svg" 
+                    onMouseEnter={() => helpers('ex2')}>
+                  </object>
+                </div>
+              </main>
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
   );
 };
