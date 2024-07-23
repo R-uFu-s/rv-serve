@@ -18,15 +18,15 @@ const SVG = {
 /* --------------------- SIMPLE DRIVER --------------------- */
 function helpers(classname) {
     // create tooltip element before #page-wrapper
-    let page = document.querySelector('#page-wrapper');
+    let page = document.querySelector('.flex-container');
     let tooltip = document.getElementById('svg_tooltip');
     if (!tooltip) {
         tooltip = document.createElement('p');
         tooltip.id = 'svg_tooltip';
-        tooltip.style.cssText = "position: absolute; padding: 0.5em; font-size: 0.75em; border-radius: 8px;" +
+        tooltip.style.cssText = "position: fixed; padding: 0.5em; font-size: 0.75em; border-radius: 8px;" +
                                 "font-family: 'Trebuchet MS', Helvetica, sans-serif;" +
                                 "background: rgb(70, 70, 70, 0.6); color: white; z-index: 100; display: none;";
-        page.parentNode.insertBefore(tooltip, page);
+        page.insertBefore(tooltip, page.firstChild);
     }
 
     displayFn(classname);
@@ -41,8 +41,8 @@ function displayFn(classname) {
     let vis_num = document.getElementsByClassName(classname);
     let code_obj = vis_num[0];
     let tl_obj = vis_num[1];
-    let c_svg = code_obj.contentDocument.firstChild;
-    let tl_svg = tl_obj.contentDocument.firstChild
+    let c_svg = code_obj;
+    let tl_svg = tl_obj;
     // get elements that will trigger function
     let triggers = tl_svg.getElementsByClassName('fn-trigger');
     var functions = c_svg.getElementsByClassName('fn');
@@ -101,7 +101,8 @@ function sizeToFit(object) {
 function displayTooltip(tooltip, classname) {
     // get svg elements
     let tl_obj = document.getElementsByClassName(classname)[1];
-    let tl_svg = tl_obj.contentDocument.firstChild
+    let tl_svg = tl_obj;
+    let real_tl_svg = tl_obj.querySelector('svg');
     // get elements that will trigger function
     let triggers = tl_svg.getElementsByClassName('tooltip-trigger');
 
@@ -121,13 +122,10 @@ function displayTooltip(tooltip, classname) {
     function showTooltip(e) {
         // only set time once, prevent from changing every time mouse moves
         if (!time_start) time_start = Date.now();
-
-        let mouse = mousePos2(e, tl_obj);
-        // console.log("mouse ev: ", e);
-        // console.log("mouse pos: ", mouse);
         
-
-        tooltip.style.transform = "translate(" + mouse.x + "px, " + mouse.y + "px)";
+        tooltip.style.left = (e.clientX - 40) + 'px'; // account for padding
+        tooltip.style.top = e.clientY + 'px';
+        // tooltip.style.transform = "translate(" + mouse.x + "px, " + mouse.y + "px)";
         tooltip.style.display = "block";
         
         let text = e.currentTarget.getAttributeNS(null, "data-tooltip-text");
@@ -161,7 +159,9 @@ function displayTooltip(tooltip, classname) {
 
     /* ---- SHOW RELEVANT LINES ---- */
     function insertUnderline(e) {
-        let doc = document.getElementsByClassName(classname + ' code_panel')[0].contentDocument; //code_panel
+        // let doc = document.getElementsByClassName(classname + ' code_panel')[0].contentDocument; //code_panel
+        let containerElement = document.getElementsByClassName(classname)[0];
+        let doc = containerElement.ownerDocument; // Obtain the high-level document
         let begin = 0, end = 0;
         if (e.currentTarget.tagName === 'path') {
             let arr = e.currentTarget.getAttribute('d').split(' ');
@@ -218,9 +218,17 @@ function displayTooltip(tooltip, classname) {
     }
 }
 
+function mousePos3(evt, el) {
+  var CTM = el.getScreenCTM();
+  return {
+      x: (evt.clientX - CTM.e) / CTM.a,
+      y: (evt.clientY - CTM.f) / CTM.d
+  };
+}
+
 function mousePos2(evt, obj) {
-    let x_pos = evt.clientX + obj.getBoundingClientRect().x - 40; // offset from svg start + svg offset
-    let y_pos = evt.clientY + 115; // i give up
+    let x_pos = evt.clientX; // offset from svg start + svg offset
+    let y_pos = evt.clientY - 300; // i give up
     // console.log("bounding y ", obj.getBoundingClientRect().y);
     // console.log("client y ", evt.clientY);
     // console.log("obj ", obj);
@@ -248,7 +256,8 @@ function mousePos(evt, obj) {
 
 
 function removeUnderline(e, classname) {
-    let doc = document.getElementsByClassName(classname + ' code_panel')[0].contentDocument; //code_panel
+  let containerElement = document.getElementsByClassName(classname)[0];
+  let doc = containerElement.ownerDocument; // Obtain the high-level document
     let arr = doc.getElementsByClassName('emph');
     for (let i = arr.length-1; i >= 0; --i) {
         arr[i].remove();

@@ -1,25 +1,24 @@
+use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger, Result, error};
 use actix_files::{Files, NamedFile};
 use env_logger;
 use log::info;
-use std::fs;
+use std::{fs, str};
 use std::process::Command;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
 
 #[derive(Deserialize)]
 struct SubmitCodePayload {
     code: String,
 }
 
-#[post("/submit")]
-async fn submit(info: web::Json<Info>) -> Result<String> {
-    Ok(format!("Welcome {}!", info.username))
-}
 
-#[derive(Deserialize)]
-struct Info {
-    username: String,
+#[derive(Deserialize, Serialize)]
+struct SubmitResponse {
+  code_panel: String, 
+  timeline_panel: String
 }
 
 async fn submit_code(payload: web::Json<SubmitCodePayload>) -> HttpResponse {
@@ -50,17 +49,24 @@ async fn submit_code(payload: web::Json<SubmitCodePayload>) -> HttpResponse {
     }
 
     // Copy the resulting SVG files to ex-assets/
-    match fs::copy("./test-crate/src/vis_code.svg", "./ex-assets/vis_code.svg") {
-        Ok(_) => {},
-        Err(E) => { return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(E)); }
-    }
-    match fs::copy("./test-crate/src/vis_timeline.svg", "./ex-assets/vis_timeline.svg") {
-        Ok(_) => {},
-        Err(E) => { return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(E)) }
-    }
+    let c_bytes = fs::read("./test-crate/src/vis_code.svg").unwrap();
+    let t_bytes = fs::read("./test-crate/src/vis_timeline.svg").unwrap();
 
-    // Send a success response back to the frontend
-    HttpResponse::Ok().body("Success")
+    let c_string = str::from_utf8(&c_bytes).unwrap();
+    let t_string = str::from_utf8(&t_bytes).unwrap();
+    let body = serde_json::to_string(&SubmitResponse {code_panel: c_string.to_owned(), timeline_panel: t_string.to_owned()}).unwrap();
+    HttpResponse::Ok().body(body.into_bytes())
+    // match fs::copy("./test-crate/src/vis_code.svg", "./ex-assets/vis_code.svg") {
+    //     Ok(_) => {},
+    //     Err(E) => { return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(E)); }
+    // }
+    // match fs::copy("./test-crate/src/vis_timeline.svg", "./ex-assets/vis_timeline.svg") {
+    //     Ok(_) => {},
+    //     Err(E) => { return HttpResponse::from_error(<std::io::Error as Into<error::Error>>::into(E)) }
+    // }
+
+    // // Send a success response back to the frontend
+    // HttpResponse::Ok().body("Success")
 }
 
 #[actix_web::main]

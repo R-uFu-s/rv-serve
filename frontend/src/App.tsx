@@ -50,6 +50,8 @@ const App = () => {
   const [isErr, setErr] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [code_svg, setCodeSvg] = useState<string | null>(null);
+  const [timeline_svg, setTimelineSvg] = useState<string | null>(null);
 
   useEffect(() => {
     const editorElement = document.getElementById('editor')!;
@@ -69,7 +71,9 @@ const App = () => {
       const response = await axios.post('http://127.0.0.1:8080/submit-code', { code });
 
       if (response.status === 200) {
-        await reloadSvgs();
+        //await reloadSvgs();
+        setCodeSvg(response.data.code_panel);
+        setTimelineSvg(response.data.timeline_panel);
         setErr(false);
       } else {
         console.error('Error:', response.statusText);
@@ -115,26 +119,31 @@ const App = () => {
       </button>
       {isErr && error ? <ErrorCard err_string={error}></ErrorCard> : 
         <div className="page">
-          <div id="menu-bar" className="menu-bar sticky">
-            <div id="content" className="content">
-              <main>
-                <div className="flex-container vis_block" style={{ position: 'relative', marginLeft: '50px', marginRight: '50px', display: 'flex' }}>
-                  <object 
+                <div className="flex-container vis_block" style={{marginLeft: '50px' }}>
+                  {/* <object 
                     type="image/svg+xml" 
                     className="ex2 code_panel" 
-                    data="ex-assets/vis_code.svg">
+                    data={code_svg ? code_svg : ""}>
                   </object>
                   <object 
                     type="image/svg+xml" 
                     className="ex2 tl_panel"
                     style={{width: 'auto'}}
-                    data="ex-assets/vis_timeline.svg" 
+                    data={timeline_svg ? timeline_svg : ""} 
                     onMouseEnter={() => helpers('ex2')}>
-                  </object>
+                  </object> */}
+                                    <div 
+                    className="ex2 code_panel" 
+                    style={{zIndex: 0}}
+                    dangerouslySetInnerHTML={{ __html: code_svg ? code_svg : "" }}>
+                  </div>
+                  <div 
+                    className="ex2 tl_panel" 
+                    style={{width: 'auto', zIndex: 0}} 
+                    dangerouslySetInnerHTML={{ __html: timeline_svg ? timeline_svg : "" }} 
+                    onMouseEnter={() => helpers('ex2')}>
+                  </div>
                 </div>
-              </main>
-            </div>
-          </div>
         </div>
       }
     </div>

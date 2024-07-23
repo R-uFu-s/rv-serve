@@ -31,11 +31,6 @@ p {
     border-radius: 5px;
 }
 
-/* Or use percentage for relative sizing */
-.vis_block object {
-  width: 500px; /* Desired width */
-  height: 500px; /* Desired height */
-}
 /* Button styles */
 .large-button {
   padding: 20px 40px; /* Increase padding to make the button larger */
@@ -72,7 +67,7 @@ p {
 }
 
 
-
+/* 
 .flex-container {
   display: flex;
   flex-direction: row;
@@ -81,10 +76,10 @@ p {
   flex-shrink: 0;
 }
 
-object.tl_panel {
+.tl_panel {
   flex-grow: 0;
 }
 
-object.code_panel {
+.code_panel {
   flex-grow: 1;
-}
+} */
